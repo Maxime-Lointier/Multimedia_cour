@@ -41,33 +41,32 @@ def render_scene(scene: lib.Scene) -> bool:
     screen = scene.screen
     width, height = scene.window_size
     
-    # ZONE 1 : CIEL (280px de haut)
-    # Couleur unie pour l'instant, on ajoutera le dithering après
-    sky_color = (135, 206, 235)  # Bleu ciel
-    pygame.draw.rect(screen, sky_color, (0, 0, width, 280))
+    # ZONE 1+2 : CIEL + COLLINE (pré-calculés, juste un blit !)
+    if scene.static_background is not None:
+        screen.blit(scene.static_background, (0, 0))
     
-    # ZONE 2 : SOLEIL (cercle de 80px de diamètre)
+    # ZONE 3 : SOLEIL (cercle de 80px de diamètre)
     sun_color = (255, 220, 100)  # Jaune soleil
     sun_pos = (width - 120, 80)  # En haut à droite
     pygame.draw.circle(screen, sun_color, sun_pos, 40)
     
-    # ZONE 3 : COLLINE/SOL (140px de haut)
+    # ZONE 4 : SOL/TERRE (140px de haut)
     ground_color = (139, 90, 60)  # Marron terre
     pygame.draw.rect(screen, ground_color, (0, 280, width, 140))
     
-    # ZONE 4 : ARBRE (placeholder rectangle)
+    # ZONE 5 : ARBRE (placeholder rectangle)
     tree_color = (101, 67, 33)  # Marron foncé
     tree_rect = pygame.Rect(50, 220, 96, 200)  # x, y, largeur, hauteur
     pygame.draw.rect(screen, tree_color, tree_rect)
     
-    # ZONE 5 : GUTS (placeholder rectangle)
+    # ZONE 6 : GUTS (placeholder rectangle)
     guts_color = (80, 80, 80)  # Gris foncé
     guts_rect = pygame.Rect(250, 260, 128, 160)
     pygame.draw.rect(screen, guts_color, guts_rect)
     
-    # ZONE 6 : NEIGE AU SOL (60px de haut)
-    snow_color = (240, 248, 255)  # Blanc neige
-    pygame.draw.rect(screen, snow_color, (0, 420, width, 60))
+    # ZONE 7 : NEIGE AU SOL (60px de haut) - Texture détaillée
+    if hasattr(scene, 'snow_ground') and scene.snow_ground is not None:
+        screen.blit(scene.snow_ground, (0, 420))
     
     # TEST DE LA PALETTE : Affiche les 24 couleurs
     show_palette_test(screen)
@@ -85,10 +84,114 @@ def render_scene(scene: lib.Scene) -> bool:
     return True  # Continue le jeu
 
 
+def create_static_background(scene: lib.Scene):
+    """
+    Crée le background statique (ciel + colline) UNE SEULE FOIS.
+    Cette surface sera réutilisée à chaque frame sans recalcul.
+    """
+    width, height = scene.window_size
+    import math
+    
+    print("Génération du background statique (ciel + colline)...")
+    
+    # Crée une surface pour le background
+    bg = pygame.Surface((width, 280))  # Hauteur du ciel + colline
+    
+    # ZONE 1 : CIEL HIVERNAL (280px de haut)
+    sky_top = lib.SKY_COLORS[5]      # Gris-bleu foncé (haut)
+    sky_bottom = lib.SKY_COLORS[0]   # Gris clair (horizon)
+    
+    # Dessine le ciel pixel par pixel avec dithering
+    for y in range(280):
+        for x in range(width):
+            pixel_color = lib.dither_gradient(
+                x, y,
+                sky_top, sky_bottom,
+                0, 280,
+                lib.SKY_COLORS
+            )
+            bg.set_at((x, y), pixel_color)
+    
+    # ZONE 2 : COLLINE LOINTAINE
+    hill_center_x = width // 2
+    hill_width = 400
+    hill_base_y = 250
+    hill_height = 80
+    
+    for x in range(width):
+        dx = (x - hill_center_x) / (hill_width / 2)
+        if abs(dx) <= 1.0:
+            hill_y = hill_base_y - hill_height * (1 - dx**2)
+            
+            for y in range(int(hill_y), hill_base_y):
+                if 0 <= y < 280:
+                    pixel_color = lib.dither_gradient(
+                        x, y,
+                        lib.HILL_COLORS[0],
+                        lib.HILL_COLORS[2],
+                        int(hill_y), hill_base_y,
+                        lib.HILL_COLORS
+                    )
+                    bg.set_at((x, y), pixel_color)
+    
+    print("Background statique généré !")
+    return bg
+
+
+def create_snow_ground(scene: lib.Scene):
+    """
+    Crée le sol enneigé avec texture détaillée.
+    La neige n'est pas uniforme : variations de lumière, ombres, aspérités.
+    """
+    width, height = scene.window_size
+    import random
+    
+    print("Génération du sol enneigé avec texture...")
+    
+    # Surface pour le sol (60px de haut)
+    snow_surface = pygame.Surface((width, 60))
+    
+    # Générateur de bruit pour texture organique
+    random.seed(42)  # Seed fixe pour cohérence
+    
+    for y in range(60):
+        for x in range(width):
+            # Variation de base selon la position verticale
+            # Plus on descend, plus c'est sombre (ombre/profondeur)
+            base_brightness = 1.0 - (y / 60) * 0.3  # De 1.0 à 0.7
+            
+            # Ajout de bruit pour texture granuleuse de neige
+            noise = (random.random() - 0.5) * 0.4  # -0.2 à +0.2
+            
+            # Bruit supplémentaire à plus grande échelle (bosses/creux)
+            import math
+            wave_x = math.sin(x / 20.0) * 0.1
+            wave_y = math.cos(y / 10.0) * 0.1
+            
+            # Combinaison des variations
+            brightness = base_brightness + noise + wave_x + wave_y
+            brightness = max(0.0, min(1.0, brightness))  # Clamp 0-1
+            
+            # Choix de la couleur selon la luminosité
+            if brightness > 0.8:
+                target = lib.SNOW_COLORS[0]  # Blanc pur (zones éclairées)
+            elif brightness > 0.5:
+                target = lib.SNOW_COLORS[1]  # Blanc bleuté (normal)
+            else:
+                target = lib.SNOW_COLORS[2]  # Gris clair (ombres)
+            
+            # Applique le dithering pour transitions douces
+            pixel_color = lib.dither_pixel(x, y, target, lib.SNOW_COLORS)
+            snow_surface.set_at((x, y), pixel_color)
+    
+    print("Sol enneigé généré !")
+    return snow_surface
+
+
 def game_init(scene: lib.Scene) -> List:
     """
     Fonction d'initialisation appelée au démarrage.
-    Pour l'instant, ne crée pas d'objets.
+    Pré-calcule les éléments statiques.
     """
     width = scene.window_size[0]
     height = scene.window_size[1]
@@ -98,6 +201,12 @@ def game_init(scene: lib.Scene) -> List:
     print(f"FPS cible : {scene.tick}")
     print("Appuyez sur ECHAP pour quitter")
     print("============================")
+    
+    # Génère le background statique UNE SEULE FOIS
+    scene.static_background = create_static_background(scene)
+    
+    # Génère le sol enneigé avec texture
+    scene.snow_ground = create_snow_ground(scene)
     
     objects = []
     return objects

@@ -34,3 +34,7 @@ revoir les ambitions
 FINAL:
 
 sa va etre une animation avec une palette limité
+
+scene:
+
+nous somme en hiver, le ciel est gris / bleuté, guts est vue de coter a frapper avec son épée de haut en bas, un arbre se trouve a proximité, grand et robuste, des floncon de neige travese l'ecran en premier plan

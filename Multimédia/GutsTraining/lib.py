@@ -42,6 +42,11 @@ class Scene:
         
         # Objets du jeu (pour l'instant vide)
         self.objects: List = []
+        
+        # Surfaces pour les éléments statiques (pré-calculés une seule fois)
+        self.static_background = None
+        self.snow_ground = None
+        
         if init is not None:
             self.objects = init(self)
         
@@ -100,17 +105,18 @@ class Scene:
 # PALETTE LIMITÉE - 24 couleurs total
 # ============================================
 
-# SECTION 1 : CIEL (6 couleurs)
+# SECTION 1 : CIEL HIVERNAL (6 couleurs)
+# Ambiance hivernale : gris bleuté, ciel couvert
 # De l'horizon (clair) vers le haut (foncé)
 SKY_COLORS = [
-    (220, 240, 255),  # 0 - Blanc horizon (le plus clair)
-    (180, 220, 245),  # 1 - Bleu très clair
-    (135, 206, 235),  # 2 - Bleu ciel classique
-    (100, 170, 210),  # 3 - Bleu moyen
-    (70, 140, 190),   # 4 - Bleu profond
-    (50, 100, 160),   # 5 - Bleu nuit (le plus foncé)
+    (200, 210, 220),  # 0 - Gris très clair horizon
+    (175, 185, 200),  # 1 - Gris-bleu clair
+    (150, 165, 185),  # 2 - Gris-bleu moyen
+    (125, 140, 165),  # 3 - Gris-bleu
+    (100, 115, 145),  # 4 - Gris-bleu foncé
+    (80, 95, 125),    # 5 - Gris-bleu très foncé (haut du ciel)
 ]
-# Avec dithering entre ces 6 = ~15 nuances de bleu visibles !
+# Avec dithering entre ces 6 = ~15 nuances de gris-bleu visibles !
 
 # SECTION 2 : SOLEIL (4 couleurs)
 SUN_COLORS = [
@@ -121,35 +127,43 @@ SUN_COLORS = [
 ]
 # Halo avec gradient dithéré du centre vers l'extérieur
 
-# SECTION 3 : SOL/TERRE (5 couleurs)
+# SECTION 3 : COLLINE LOINTAINE (3 couleurs)
+# Tons clairs, désaturés pour effet de distance/brume
+HILL_COLORS = [
+    (160, 170, 175),  # 10 - Sommet de colline (clair)
+    (135, 145, 155),  # 11 - Pente moyenne
+    (115, 125, 140),  # 12 - Base de colline (foncé)
+]
+
+# SECTION 4 : SOL/TERRE (5 couleurs)
 GROUND_COLORS = [
-    (180, 140, 100),  # 10 - Terre claire
-    (150, 110, 80),   # 11 - Terre moyenne
-    (120, 80, 60),    # 12 - Terre sombre
-    (90, 60, 45),     # 13 - Terre très sombre
-    (60, 40, 30),     # 14 - Ombres profondes
+    (180, 140, 100),  # 13 - Terre claire
+    (150, 110, 80),   # 14 - Terre moyenne
+    (120, 80, 60),    # 15 - Terre sombre
+    (90, 60, 45),     # 16 - Terre très sombre
+    (60, 40, 30),     # 17 - Ombres profondes
 ]
 # Texture du sol avec variation
 
-# SECTION 4 : ARBRE (4 couleurs)
+# SECTION 5 : ARBRE (4 couleurs)
 TREE_COLORS = [
-    (140, 100, 60),   # 15 - Bois clair (lumière)
-    (100, 70, 40),    # 16 - Bois moyen
-    (70, 50, 30),     # 17 - Bois sombre
-    (40, 30, 20),     # 18 - Écorce/ombres
+    (140, 100, 60),   # 18 - Bois clair (lumière)
+    (100, 70, 40),    # 19 - Bois moyen
+    (70, 50, 30),     # 20 - Bois sombre
+    (40, 30, 20),     # 21 - Écorce/ombres
 ]
 
-# SECTION 5 : NEIGE (3 couleurs)
+# SECTION 6 : NEIGE (3 couleurs)
 SNOW_COLORS = [
-    (255, 255, 255),  # 19 - Blanc pur
-    (230, 235, 245),  # 20 - Blanc bleuté (ombres)
-    (200, 210, 220),  # 21 - Gris clair neigeux
+    (255, 255, 255),  # 22 - Blanc pur
+    (230, 235, 245),  # 23 - Blanc bleuté (ombres)
+    (200, 210, 220),  # 24 - Gris clair neigeux
 ]
 
-# SECTION 6 : GUTS (2 couleurs pour l'instant)
+# SECTION 7 : GUTS (2 couleurs pour l'instant)
 GUTS_COLORS = [
-    (60, 60, 70),     # 22 - Armure sombre
-    (40, 40, 45),     # 23 - Ombres armure
+    (60, 60, 70),     # 25 - Armure sombre
+    (40, 40, 45),     # 26 - Ombres armure
 ]
 
 # ============================================
@@ -158,6 +172,7 @@ GUTS_COLORS = [
 FULL_PALETTE = (
     SKY_COLORS + 
     SUN_COLORS + 
+    HILL_COLORS +
     GROUND_COLORS + 
     TREE_COLORS + 
     SNOW_COLORS + 
@@ -165,7 +180,7 @@ FULL_PALETTE = (
 )
 
 print(f"Nombre total de couleurs : {len(FULL_PALETTE)}")
-# Affiche : 24
+# Affiche : 27
 
 
 # ============================================
