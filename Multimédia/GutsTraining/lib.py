@@ -45,7 +45,9 @@ class Scene:
         
         # Surfaces pour les éléments statiques (pré-calculés une seule fois)
         self.static_background = None
+        self.middle_ground = None
         self.snow_ground = None
+        self.tree = None
         
         if init is not None:
             self.objects = init(self)
@@ -143,27 +145,37 @@ GROUND_COLORS = [
     (90, 60, 45),     # 16 - Terre très sombre
     (60, 40, 30),     # 17 - Ombres profondes
 ]
+
+# SECTION 4B : HERBE/VÉGÉTATION HIVERNALE (4 couleurs)
+GRASS_COLORS = [
+    (100, 110, 85),   # 18 - Herbe sèche claire
+    (80, 90, 70),     # 19 - Herbe sèche moyenne
+    (60, 70, 55),     # 20 - Herbe sèche foncée
+    (45, 55, 45),     # 21 - Herbe très sombre
+]
 # Texture du sol avec variation
 
-# SECTION 5 : ARBRE (4 couleurs)
+# SECTION 5 : ARBRE HIVERNAL (5 couleurs)
+# Arbre mature noir sans feuilles
 TREE_COLORS = [
-    (140, 100, 60),   # 18 - Bois clair (lumière)
-    (100, 70, 40),    # 19 - Bois moyen
-    (70, 50, 30),     # 20 - Bois sombre
-    (40, 30, 20),     # 21 - Écorce/ombres
+    (40, 40, 45),     # 22 - Noir-gris (tronc principal)
+    (30, 30, 35),     # 23 - Noir (ombres tronc)
+    (50, 50, 55),     # 24 - Gris très foncé (lumière sur tronc)
+    (25, 25, 30),     # 25 - Noir profond (branches fines)
+    (20, 20, 25),     # 26 - Noir absolu (détails)
 ]
 
 # SECTION 6 : NEIGE (3 couleurs)
 SNOW_COLORS = [
-    (255, 255, 255),  # 22 - Blanc pur
-    (230, 235, 245),  # 23 - Blanc bleuté (ombres)
-    (200, 210, 220),  # 24 - Gris clair neigeux
+    (255, 255, 255),  # 27 - Blanc pur
+    (230, 235, 245),  # 28 - Blanc bleuté (ombres)
+    (200, 210, 220),  # 29 - Gris clair neigeux
 ]
 
 # SECTION 7 : GUTS (2 couleurs pour l'instant)
 GUTS_COLORS = [
-    (60, 60, 70),     # 25 - Armure sombre
-    (40, 40, 45),     # 26 - Ombres armure
+    (60, 60, 70),     # 30 - Armure sombre
+    (40, 40, 45),     # 31 - Ombres armure
 ]
 
 # ============================================
@@ -173,14 +185,15 @@ FULL_PALETTE = (
     SKY_COLORS + 
     SUN_COLORS + 
     HILL_COLORS +
-    GROUND_COLORS + 
+    GROUND_COLORS +
+    GRASS_COLORS +
     TREE_COLORS + 
     SNOW_COLORS + 
     GUTS_COLORS
 )
 
 print(f"Nombre total de couleurs : {len(FULL_PALETTE)}")
-# Affiche : 27
+# Affiche : 32
 
 
 # ============================================
