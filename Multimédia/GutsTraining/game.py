@@ -68,8 +68,7 @@ def render_scene(scene: lib.Scene) -> bool:
     if hasattr(scene, 'snow_ground') and scene.snow_ground is not None:
         screen.blit(scene.snow_ground, (0, 420))
     
-    # TEST DE LA PALETTE : Affiche les 24 couleurs
-    show_palette_test(screen)
+
     
     # AFFICHAGE DEBUG : Informations à l'écran
     font = pygame.font.Font(None, 24)
@@ -112,27 +111,63 @@ def create_static_background(scene: lib.Scene):
             )
             bg.set_at((x, y), pixel_color)
     
-    # ZONE 2 : COLLINE LOINTAINE
-    hill_center_x = width // 2
-    hill_width = 400
-    hill_base_y = 250
-    hill_height = 80
+    # ZONE 2 : MONTAGNES EN PLUSIEURS COUCHES (effet de profondeur)
+    # Définition des montagnes : (centre_x, largeur, hauteur, couleur_idx)
+    # couleur_idx: 0=plus clair (lointain), 2=plus foncé (proche)
     
-    for x in range(width):
-        dx = (x - hill_center_x) / (hill_width / 2)
-        if abs(dx) <= 1.0:
-            hill_y = hill_base_y - hill_height * (1 - dx**2)
+    mountains = [
+        # Arrière-plan (lointain, clair, plus larges)
+        (width * 0.2, 200, 100, 0),   # Montagne gauche lointaine
+        (width * 0.7, 250, 120, 0),   # Montagne droite lointaine
+        
+        # Plan moyen
+        (width * 0.45, 180, 140, 1),  # Montagne centre
+        (width * 0.85, 160, 110, 1),  # Montagne droite moyenne
+        
+        # Premier plan (proche, foncé, plus étroites et hautes)
+        (width * 0.15, 120, 160, 2),  # Montagne gauche proche
+        (width * 0.6, 140, 150, 2),   # Montagne droite proche
+    ]
+    
+    mountain_base_y = 280  # Touche le sol maintenant
+    
+    # Dessine chaque montagne de l'arrière vers l'avant
+    for center_x, mtn_width, mtn_height, color_depth in mountains:
+        for x in range(width):
+            # Distance normalisée du centre (-1 à 1)
+            dx = (x - center_x) / (mtn_width / 2)
             
-            for y in range(int(hill_y), hill_base_y):
-                if 0 <= y < 280:
-                    pixel_color = lib.dither_gradient(
-                        x, y,
-                        lib.HILL_COLORS[0],
-                        lib.HILL_COLORS[2],
-                        int(hill_y), hill_base_y,
-                        lib.HILL_COLORS
-                    )
-                    bg.set_at((x, y), pixel_color)
+            if abs(dx) <= 1.0:  # Si on est dans la largeur de la montagne
+                # Forme triangulaire/pointue : y = base - height * (1 - |x|)
+                # Plus pointu que la parabole précédente
+                peak_y = mountain_base_y - mtn_height * (1 - abs(dx))
+                
+                # Dessine du sommet jusqu'à la base
+                for y in range(int(peak_y), mountain_base_y):
+                    if 0 <= y < 280:  # Reste dans la zone ciel
+                        # Gradient selon profondeur dans la montagne
+                        # Choix de couleur selon la couche (lointain/proche)
+                        if color_depth == 0:
+                            # Lointain : très clair (effet brume)
+                            top_color = lib.HILL_COLORS[0]
+                            bottom_color = lib.HILL_COLORS[1]
+                        elif color_depth == 1:
+                            # Moyen
+                            top_color = lib.HILL_COLORS[1]
+                            bottom_color = lib.HILL_COLORS[2]
+                        else:
+                            # Proche : plus foncé
+                            top_color = lib.HILL_COLORS[2]
+                            bottom_color = (100, 110, 125)  # Encore plus foncé
+                        
+                        pixel_color = lib.dither_gradient(
+                            x, y,
+                            top_color,
+                            bottom_color,
+                            int(peak_y), mountain_base_y,
+                            lib.HILL_COLORS
+                        )
+                        bg.set_at((x, y), pixel_color)
     
     print("Background statique généré !")
     return bg
