@@ -1,0 +1,32 @@
+problématique:
+"quest ce que mon cours vous a appris que vous ne saviez pas faire avant"
+
+rapport = 15 points, 3/4 pages, (image compte pas)
+
+présenter le projet, ce que sa fait, comment on a exploiter des phénomène, la sélection des couleurs. y a toujours des truc a raconter.
+demo = 5 points
+
+idée de base:
+je trouve drole de fair un jeu ou un mec grave fort fait du bench et un autre exo et genre ta un minijeu en mode the escapist, si tu rate sa tombe sur toi et tu perd et si tu t'arrete a temp ta des points par example.
+
+seconde idée, car la difficulté est haute:
+
+faire la scene de guts sur la colline qui s'entraine a l'épée:
+un arbre avec des branche de base qui bouge beaucoup, le sol (neige), un soleil, avec un guts qui serait surement repris qui swing l'épée plus animation mais on peut incorporer du gameplay.
+idée du gameplay, c'est guts qui coupe le bois mmais y a une jauge qui se fait, genre millieu vert,jaune,rouge,gris, et tu dois faire au millieu pour infliger le plus de degas au tronc. score donc 
+plus il neige et sa passe devant
+
+(no ai,like fr, as in understand every thing,more like no ai slop)
+
+tableau de bord,
+je dois stocker mes pensé sinon c'est compliqué.
+
+au tout depart j'imagine l'init comme un peu le qualité dev ou les responsabilité sont bien séparer.
+donc a présent je le vois en "gateau" ou "couche" ou je vais deployer 1 par 1 mes éléments, je vais surement faire des fichiers séparé
+
+(dans le dev, debut)
+j'ai du mal a mettre l'environnement du prof, je vais peut etre copier et réduire car personnelement je comprend pas
+
+IMPORTANT: dans les asset du prof il y a un site d'image libre de droit
+
+revoir les ambitions
