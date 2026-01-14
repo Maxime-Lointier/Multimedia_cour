@@ -5,6 +5,32 @@ from typing import List
 import lib
 
 
+def show_palette_test(screen):
+    """
+    Affiche toutes les couleurs de la palette pour vérifier.
+    Chaque couleur = carré 30×30 pixels.
+    """
+    x, y = 10, 100
+    
+    for i, color in enumerate(lib.FULL_PALETTE):
+        # Dessine un carré 30×30 par couleur
+        pygame.draw.rect(screen, color, (x, y, 30, 30))
+        
+        # Bordure noire pour mieux voir
+        pygame.draw.rect(screen, (0, 0, 0), (x, y, 30, 30), 1)
+        
+        # Numéro de la couleur
+        font = pygame.font.Font(None, 16)
+        num_text = font.render(str(i), True, (255, 255, 255))
+        screen.blit(num_text, (x + 8, y + 8))
+        
+        # Passe à la ligne tous les 8 carrés
+        x += 35
+        if (i + 1) % 8 == 0:
+            x = 10
+            y += 35
+
+
 def render_scene(scene: lib.Scene) -> bool:
     """
     Fonction de rendu appelée à chaque frame.
@@ -42,6 +68,9 @@ def render_scene(scene: lib.Scene) -> bool:
     # ZONE 6 : NEIGE AU SOL (60px de haut)
     snow_color = (240, 248, 255)  # Blanc neige
     pygame.draw.rect(screen, snow_color, (0, 420, width, 60))
+    
+    # TEST DE LA PALETTE : Affiche les 24 couleurs
+    show_palette_test(screen)
     
     # AFFICHAGE DEBUG : Informations à l'écran
     font = pygame.font.Font(None, 24)
