@@ -294,6 +294,136 @@ def create_middle_ground(scene: lib.Scene):
     return mg_surface
 
 
+def draw_sword(surface, x, base_y, height, angle_offset=0):
+    blade_width = max(3, height // 15)
+    handle_height = height // 4
+    blade_height = height - handle_height
+    guard_width = blade_width * 4
+    
+    angle_rad = math.radians(angle_offset)
+    cos_a = math.cos(angle_rad)
+    sin_a = math.sin(angle_rad)
+    
+    def rotate_point(px, py):
+        rx = x + (px - x) * cos_a - (py - base_y) * sin_a
+        ry = base_y + (px - x) * sin_a + (py - base_y) * cos_a
+        return int(rx), int(ry)
+    
+    for y_offset in range(blade_height):
+        py = base_y - handle_height - y_offset
+        t = y_offset / blade_height
+        current_width = int(blade_width * (0.3 + t * 0.7))
+        
+        for dx in range(-current_width, current_width + 1):
+            px = x + dx
+            rx, ry = rotate_point(px, py)
+            
+            if 0 <= rx < surface.get_width() and 0 <= ry < surface.get_height():
+                center_groove = abs(dx) < max(1, current_width // 3)
+                center_highlight = abs(dx) <= 1
+                
+                random.seed(rx * 17 + int(py / 3) * 31)
+                scratch = random.random() > 0.92
+                
+                edge_factor = abs(dx) / max(1, current_width)
+                vertical_factor = 1.0 - (y_offset / blade_height) * 0.2
+                
+                if center_highlight:
+                    brightness = 0.95
+                elif center_groove:
+                    brightness = 0.4 + vertical_factor * 0.2
+                elif scratch:
+                    brightness = 0.3
+                else:
+                    brightness = (0.8 - edge_factor * 0.4) * vertical_factor
+                
+                brightness = max(0.0, min(1.0, brightness))
+                
+                if brightness > 0.85:
+                    target = lib.GUTS_COLORS[2]
+                elif brightness > 0.65:
+                    target = lib.GUTS_COLORS[0]
+                elif brightness > 0.45:
+                    target = lib.GUTS_COLORS[1]
+                else:
+                    target = lib.GUTS_COLORS[3]
+                
+                pixel_color = lib.dither_pixel(rx, ry, target, lib.GUTS_COLORS[:4])
+                surface.set_at((rx, ry), pixel_color)
+    
+    guard_y = base_y - handle_height
+    guard_thickness = max(2, blade_width // 2)
+    
+    for dx in range(-guard_width, guard_width + 1):
+        for dy in range(-guard_thickness, guard_thickness + 1):
+            px = x + dx
+            py = guard_y + dy
+            rx, ry = rotate_point(px, py)
+            
+            if 0 <= rx < surface.get_width() and 0 <= ry < surface.get_height():
+                dist_from_center = abs(dx)
+                
+                if dist_from_center > guard_width * 0.7:
+                    brightness = 0.6
+                else:
+                    brightness = 0.4 + (1.0 - dist_from_center / guard_width) * 0.2
+                
+                if abs(dy) == guard_thickness:
+                    brightness *= 0.7
+                
+                if brightness > 0.6:
+                    target = lib.GUTS_COLORS[0]
+                elif brightness > 0.4:
+                    target = lib.GUTS_COLORS[1]
+                else:
+                    target = lib.GUTS_COLORS[3]
+                
+                pixel_color = lib.dither_pixel(rx, ry, target, lib.GUTS_COLORS[:4])
+                surface.set_at((rx, ry), pixel_color)
+    
+    handle_width = max(2, blade_width - 1)
+    
+    for y_offset in range(handle_height):
+        py = base_y - y_offset
+        segment = (y_offset // 3) % 2
+        
+        for dx in range(-handle_width, handle_width + 1):
+            px = x + dx
+            rx, ry = rotate_point(px, py)
+            
+            if 0 <= rx < surface.get_width() and 0 <= ry < surface.get_height():
+                if segment == 0:
+                    target = lib.GUTS_COLORS[3]
+                else:
+                    target = lib.GUTS_COLORS[1]
+                
+                pixel_color = lib.dither_pixel(rx, ry, target, lib.GUTS_COLORS[:4])
+                surface.set_at((rx, ry), pixel_color)
+    
+    pommel_y = base_y
+    pommel_size = blade_width + 1
+    
+    for dx in range(-pommel_size, pommel_size + 1):
+        for dy in range(-pommel_size, pommel_size + 1):
+            px = x + dx
+            py = pommel_y + dy
+            rx, ry = rotate_point(px, py)
+            
+            if 0 <= rx < surface.get_width() and 0 <= ry < surface.get_height():
+                dist = math.sqrt(dx**2 + dy**2)
+                if dist <= pommel_size:
+                    sphere_factor = 1.0 - (dist / pommel_size)
+                    light_side = dx > 0
+                    
+                    if light_side and sphere_factor > 0.6:
+                        target = lib.GUTS_COLORS[0]
+                    else:
+                        target = lib.GUTS_COLORS[1]
+                    
+                    pixel_color = lib.dither_pixel(rx, ry, target, lib.GUTS_COLORS[:4])
+                    surface.set_at((rx, ry), pixel_color)
+
+
 def create_snow_ground(scene: lib.Scene):
     width, height = scene.window_size
     import random
@@ -329,6 +459,7 @@ def create_snow_ground(scene: lib.Scene):
         sword_y = 60 - depth_in_snow
         sword_height = random.randint(35, 55)
         angle = random.randint(-20, 20)
+        draw_sword(snow_surface, sword_x, sword_y, sword_height, angle)
     
     print("Sol enneigé avec épées généré !")
     return snow_surface
