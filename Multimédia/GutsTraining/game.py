@@ -87,11 +87,11 @@ def render_scene(scene: lib.Scene) -> bool:
     pygame.draw.rect(screen, door_color, (house_x + 3, house_y + 7, 4, 8))
     
     # ZONE 5 : ARBRE HIVERNAL 
-    # Utilise des frames pré calculées pour l'animation
+    # Utilise des frames pré calculées pour l'animation (sprite sheet 60 fps)
     if hasattr(scene, 'tree_animation') and scene.tree_animation is not None:
         
         wind_time = scene.time_game * 0.8
-        frame_index = int((wind_time * 8) % len(scene.tree_animation))  # 8 frames/sec
+        frame_index = int((wind_time * 12) % len(scene.tree_animation))  # 12 frames/sec
         
         current_tree = scene.tree_animation[frame_index]
         screen.blit(current_tree, (10, 70))  
@@ -551,43 +551,65 @@ def create_tree(scene: lib.Scene, wind_offset=0):
 
 
 def create_tree_animation(scene: lib.Scene):
-    cache_dir = "tree_cache"
-    num_frames = 40
-    if os.path.exists(cache_dir):
-        cached_files = [f for f in os.listdir(cache_dir) if f.endswith('.png')]
-        
-        if len(cached_files) == num_frames:
-            print(f"Chargement de l'animation de l'arbre depuis le cache ({num_frames} frames)...")
-            try:
-                frames = []
-                for i in range(num_frames):
-                    frame_path = os.path.join(cache_dir, f"tree_frame_{i:03d}.png")
-                    frame = pygame.image.load(frame_path).convert_alpha()
-                    frames.append(frame)
-                print("Animation de l'arbre chargée !")
-                return frames
-            except Exception as e:
-                print(f"Erreur lors du chargement du cache : {e}")
-                print("Régénération de l'animation...")
+    cache_file = "tree_cache/tree_spritesheet.png"
+    num_frames = 60
+    frame_width = 300
+    frame_height = 350
+    
+    if os.path.exists(cache_file):
+        print(f"Chargement de la sprite sheet ({num_frames} frames)...")
+        try:
+            spritesheet = pygame.image.load(cache_file).convert_alpha()
+            frames = []
+            
+            cols = 10
+            for i in range(num_frames):
+                col = i % cols
+                row = i // cols
+                x = col * frame_width
+                y = row * frame_height
+                frame = spritesheet.subsurface((x, y, frame_width, frame_height)).copy()
+                frames.append(frame)
+            
+            print("Sprite sheet chargée !")
+            return frames
+        except Exception as e:
+            print(f"Erreur lors du chargement : {e}")
+            print("Régénération de la sprite sheet...")
     
     print(f"Génération de l'animation de l'arbre ({num_frames} frames)...")
+    
+    cols = 10
+    rows = (num_frames + cols - 1) // cols  
+    sheet_width = cols * frame_width
+    sheet_height = rows * frame_height
+    
+    print(f"Création de la sprite sheet ({sheet_width}×{sheet_height} px)...")
+    spritesheet = pygame.Surface((sheet_width, sheet_height), pygame.SRCALPHA)
     frames = []
+    
     for i in range(num_frames):
+        if i % 10 == 0:
+            print(f"  Frame {i}/{num_frames}...")
+        
         t = (i / num_frames) * 2 * math.pi
         wind_offset = math.sin(t) * 2.5
         tree_frame = create_tree(scene, wind_offset)
+        
+        col = i % cols
+        row = i // cols
+        x = col * frame_width
+        y = row * frame_height
+        spritesheet.blit(tree_frame, (x, y))
+        
         frames.append(tree_frame)
+    
     try:
-        print("Sauvegarde de l'animation dans le cache...")
-        os.makedirs(cache_dir, exist_ok=True)
-        
-        for i, frame in enumerate(frames):
-            frame_path = os.path.join(cache_dir, f"tree_frame_{i:03d}.png")
-            pygame.image.save(frame, frame_path)
-        
-        print("Cache créé !")
+        os.makedirs("tree_cache", exist_ok=True)
+        pygame.image.save(spritesheet, cache_file)
+        print(f"Sprite sheet sauvegardée !")
     except Exception as e:
-        print(f"Erreur lors de la sauvegarde du cache : {e}")
+        print(f"Erreur lors de la sauvegarde : {e}")
     
     print("Animation de l'arbre générée !")
     return frames
